@@ -4,7 +4,7 @@
 
 This project reimplements a corporate employee contribution leaderboard as a fun, data-driven **Bird Leaderboard** — ranking 10 real bird species across five measurable categories using actual ornithological data.
 
-The live app is deployed on GitHub Pages: **[Link to deployed app]**
+The live app is deployed on GitHub Pages: **[[Link to deployed app]](https://adarka-shut.github.io/task-1/)**
 
 ---
 
