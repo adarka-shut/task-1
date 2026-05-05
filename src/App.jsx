@@ -342,20 +342,25 @@ export default function BirdLeaderboard() {
   const [expanded, setExpanded] = useState(null);
 
   const ranked = useMemo(() => {
-    let list = BIRDS.map(b => ({ ...b, total: getTotal(b, year) }));
-    if (search.trim()) {
-      const q = search.toLowerCase();
-      list = list.filter(b => b.name.toLowerCase().includes(q) || b.country.toLowerCase().includes(q));
-    }
-    if (category !== "All Categories") {
-      list = list.map(b => {
+    // Step 1: Score and rank ALL birds globally
+    let all = BIRDS.map(b => {
+      let total = getTotal(b, year);
+      if (category !== "All Categories") {
         const s = year === "2000" ? b.scores2000 : b.scores2025;
         const key = category === "Max Speed" ? "speed" : category === "Weight" ? "weight" : category === "Lifespan" ? "lifespan" : category === "Eggs" ? "eggs" : "population";
-        return { ...b, total: s[key] };
-      });
+        total = s[key];
+      }
+      return { ...b, total };
+    });
+    all.sort((a, b) => b.total - a.total);
+    all = all.map((b, i) => ({ ...b, rank: i + 1 }));
+
+    // Step 2: Filter for display, but keep global ranks
+    if (search.trim()) {
+      const q = search.toLowerCase();
+      all = all.filter(b => b.name.toLowerCase().includes(q) || b.country.toLowerCase().includes(q));
     }
-    list.sort((a, b) => b.total - a.total);
-    return list.map((b, i) => ({ ...b, rank: i + 1 }));
+    return all;
   }, [year, season, category, search]);
 
   const top3 = ranked.slice(0, 3);
@@ -434,11 +439,36 @@ export default function BirdLeaderboard() {
           to { opacity: 1; transform: translateY(0); }
         }
         .podium-bird { animation: slideUp 0.5s ease-out both; }
+        @media (max-width: 640px) {
+          .select-style { font-size: 12px; padding: 7px 28px 7px 10px; flex: 1 1 calc(50% - 5px); min-width: 0; }
+          .search-input { font-size: 12px; padding: 7px 10px 7px 32px; }
+          .filter-bar { flex-wrap: wrap !important; }
+          .podium-wrap { gap: 6px !important; padding: 12px 0 0 !important; }
+          .podium-bird svg { max-width: 52px; max-height: 52px; }
+          .bird-name-podium { font-size: 11px !important; }
+          .bird-country-podium { font-size: 10px !important; }
+          .bird-score-podium { font-size: 15px !important; }
+          .pillar-number { font-size: 32px !important; }
+          .list-row { padding: 10px 12px !important; gap: 8px !important; }
+          .bird-name-list { font-size: 13px !important; }
+          .cat-icons-row { display: none !important; }
+          .activity-grid { grid-template-columns: 1fr !important; gap: 4px !important; }
+          .activity-cat, .activity-season { display: inline-block; margin-right: 8px; }
+          .activity-points { text-align: left !important; }
+          .page-header { font-size: 28px !important; }
+          .page-container { padding-left: 16px !important; padding-right: 16px !important; }
+        }
+        @media (max-width: 400px) {
+          .podium-wrap { gap: 4px !important; }
+          .podium-bird svg { max-width: 44px; max-height: 44px; }
+          .bird-name-podium { font-size: 10px !important; }
+          .pillar-number { font-size: 24px !important; }
+        }
       `}</style>
 
       {/* Header */}
-      <div style={{ padding: "32px 24px 0", maxWidth: 900, margin: "0 auto" }}>
-        <h1 style={{
+      <div className="page-container" style={{ padding: "32px 24px 0", maxWidth: 900, margin: "0 auto" }}>
+        <h1 className="page-header" style={{
           fontFamily: "'Crimson Pro', serif",
           fontSize: 36, fontWeight: 700, letterSpacing: "-0.5px",
           color: "#2d3748", marginBottom: 4,
@@ -458,7 +488,7 @@ export default function BirdLeaderboard() {
         padding: "16px 24px",
         maxWidth: 900, margin: "0 auto",
       }}>
-        <div style={{
+        <div className="filter-bar" style={{
           background: "white",
           borderRadius: 12,
           padding: "14px 16px",
@@ -497,7 +527,7 @@ export default function BirdLeaderboard() {
         <div style={{
           maxWidth: 900, margin: "0 auto", padding: "8px 24px 0",
         }}>
-          <div style={{
+          <div className="podium-wrap" style={{
             display: "flex", justifyContent: "center", alignItems: "flex-end",
             gap: 12, padding: "20px 0 0",
           }}>
@@ -542,12 +572,12 @@ export default function BirdLeaderboard() {
                       boxShadow: "0 2px 4px rgba(0,0,0,0.2)",
                     }}>{actualRank}</div>
                   </div>
-                  <div style={{
+                  <div className="bird-name-podium" style={{
                     fontFamily: "'DM Sans', sans-serif",
                     fontSize: 13, fontWeight: 600, color: "#2d3748",
                     textAlign: "center", marginBottom: 2, lineHeight: 1.2,
                   }}>{bird.name}</div>
-                  <div style={{
+                  <div className="bird-country-podium" style={{
                     fontFamily: "'DM Sans', sans-serif",
                     fontSize: 11, color: "#718096", marginBottom: 6,
                   }}>{bird.flag} {bird.country}</div>
@@ -556,7 +586,7 @@ export default function BirdLeaderboard() {
                     marginBottom: 8,
                   }}>
                     <span style={{ color: "#ecc94b", fontSize: 16 }}>★</span>
-                    <span style={{
+                    <span className="bird-score-podium" style={{
                       fontFamily: "'DM Sans', sans-serif",
                       fontWeight: 700, fontSize: 18, color: "#2b6cb0",
                     }}>{bird.total}</span>
@@ -569,8 +599,7 @@ export default function BirdLeaderboard() {
                     display: "flex", alignItems: "center", justifyContent: "center",
                     boxShadow: "inset 0 2px 4px rgba(255,255,255,0.3)",
                   }}>
-                    <span style={{
-                      fontSize: 48, fontWeight: 700,
+                    <span className="pillar-number" style={{
                       fontFamily: "'Crimson Pro', serif",
                       opacity: 0.25, color: numColor,
                     }}>{actualRank}</span>
@@ -617,7 +646,7 @@ export default function BirdLeaderboard() {
                 overflow: "hidden",
               }}>
                 {/* Main row */}
-                <div style={{
+                <div className="list-row" style={{
                   display: "flex", alignItems: "center", padding: "12px 16px", gap: 12,
                   cursor: "pointer",
                 }} onClick={() => setExpanded(isExpanded ? null : bird.name)}>
@@ -635,7 +664,7 @@ export default function BirdLeaderboard() {
 
                   {/* Name + Country */}
                   <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{
+                    <div className="bird-name-list" style={{
                       fontFamily: "'DM Sans', sans-serif",
                       fontSize: 15, fontWeight: 600, color: "#2d3748",
                       whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis",
@@ -647,7 +676,7 @@ export default function BirdLeaderboard() {
                   </div>
 
                   {/* Category icons with counts */}
-                  <div style={{
+                  <div className="cat-icons-row" style={{
                     display: "flex", gap: 8, alignItems: "center", flexShrink: 0,
                   }}>
                     {CATEGORIES.filter(c => catCounts[c] > 0).slice(0, 3).map(c => (
@@ -708,7 +737,7 @@ export default function BirdLeaderboard() {
                     }}>Recent Activity</div>
 
                     {/* Table header */}
-                    <div style={{
+                    <div className="activity-grid" style={{
                       display: "grid",
                       gridTemplateColumns: "1fr 110px 70px 60px",
                       gap: 8, padding: "0 0 6px",
@@ -727,7 +756,7 @@ export default function BirdLeaderboard() {
 
                     {/* Rows */}
                     {filteredActs.map((act, i) => (
-                      <div key={i} className="activity-row" style={{
+                      <div key={i} className="activity-row activity-grid" style={{
                         display: "grid",
                         gridTemplateColumns: "1fr 110px 70px 60px",
                         gap: 8, padding: "8px 0",
